@@ -26,7 +26,7 @@
         </div>
 
         <!---------- Precio --------->
-        <app-custom-input type="number" label="Precio" [control]="form.controls.price">
+        <app-custom-input type="number" label="Precio" [control]="form.controls.price" (ionInput)="setNumberInputs()">
         </app-custom-input>
 
         <div class="validators" *ngIf="form.controls.price.errors && form.controls.price.touched">
@@ -35,7 +35,7 @@
         </div>
 
         <!---------- Unidades vendidas --------->
-        <app-custom-input type="number" label="Unidades vendidas" [control]="form.controls.soldUnits">
+        <app-custom-input type="number" label="Unidades vendidas" [control]="form.controls.soldUnits" (ionInput)="setNumberInputs()">
         </app-custom-input>
 
         <div class="validators" *ngIf="form.controls.soldUnits.errors && form.controls.soldUnits.touched">

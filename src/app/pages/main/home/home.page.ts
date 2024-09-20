@@ -4,6 +4,7 @@ import { User } from 'src/app/models/user.model';
 import { FirebaseService } from 'src/app/services/firebase.service';
 import { UtilsService } from 'src/app/services/utils.service';
 import { AddUpdateProductComponent } from 'src/app/shared/components/add-update-product/add-update-product.component';
+import { orderBy, where } from 'firebase/firestore'
 
 @Component({
   selector: 'app-home',
@@ -14,12 +15,14 @@ export class HomePage implements OnInit {
 
   firebaseSvc = inject(FirebaseService);
   utilsSvc = inject(UtilsService);
+
   products: product[] = [];
+  loading: boolean = false;
 
   ngOnInit() {
   }
 
-  user() : User {
+  user(): User {
     return this.utilsSvc.getFromLocalStorage('user');
   }
 
@@ -28,31 +31,49 @@ export class HomePage implements OnInit {
     this.getProducts();
   }
 
-async confirmDeleteProduct(product: product) {
-  this.utilsSvc.presentAlert({
-    header: 'Eliminar Producto',
-    message: '¿Quieres eliminar este producto?',
-    mode: 'ios',
-    buttons: [
-      {
-        text: 'Cancelar',
-      }, {
-        text: 'Si, eliminar',
-        handler: () => {
-          this.deleteProduct(product);
+  doRefresh(event) {
+    setTimeout(() => {
+      this.getProducts();
+      event.target.complete();
+    }, 1000);
+  }
+
+  getProfits() {
+    return this.products.reduce((index, product) => index + product.price * product.soldUnits, 0);
+  }
+
+  async confirmDeleteProduct(product: product) {
+    this.utilsSvc.presentAlert({
+      header: 'Eliminar Producto',
+      message: '¿Quieres eliminar este producto?',
+      mode: 'ios',
+      buttons: [
+        {
+          text: 'Cancelar',
+        }, {
+          text: 'Si, eliminar',
+          handler: () => {
+            this.deleteProduct(product);
+          }
         }
-      }
-    ]
-  });
-}
+      ]
+    });
+  }
 
   // Cerrar Sesión
   getProducts() {
     let path = `users/${this.user().uid}/products`;
-    let sub = this.firebaseSvc.getCollectionData(path).subscribe({
+    this.loading = true;
+
+    let query = [
+      orderBy('soldUnits', 'desc'),
+      // where('soldUnits', '>', 20)
+    ]
+
+    let sub = this.firebaseSvc.getCollectionData(path, query).subscribe({
       next: (res: any) => {
-        console.log(res);
         this.products = res;
+        this.loading = false;
         sub.unsubscribe();
       }
     })
@@ -66,7 +87,7 @@ async confirmDeleteProduct(product: product) {
       componentProps: { product }
     })
 
-    if(success) this.getProducts();
+    if (success) this.getProducts();
   }
 
   // Eliminar Producto
@@ -76,7 +97,7 @@ async confirmDeleteProduct(product: product) {
 
     const loading = await this.utilsSvc.loading();
     await loading.present();
-    
+
     let imagePath = await this.firebaseSvc.getFilePath(product.image)
     await this.firebaseSvc.deleteFile(imagePath);
 

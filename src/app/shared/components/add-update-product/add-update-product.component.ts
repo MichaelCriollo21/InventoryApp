@@ -47,6 +47,14 @@ export class AddUpdateProductComponent implements OnInit {
     }
   }
 
+  setNumberInputs() {
+    let { soldUnits, price } = this.form.controls;
+    
+    if(soldUnits.value) soldUnits.setValue(parseFloat(soldUnits.value));
+    if(price.value) price.setValue(parseFloat(price.value));
+  }
+
+  // Crear Producto
   async createProduct() {
 
     let path = `users/${this.user.uid}/products`;
